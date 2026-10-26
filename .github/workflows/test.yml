@@ -7,6 +7,12 @@ on:
     tags:
       - '*'
   workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: Simuler un échec pour vérifier le blocage de la pipeline
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -62,6 +68,13 @@ jobs:
         if: ${{ hashFiles('composer.json') == '' }}
         run: echo "Tests PHPUnit en attente de la création du projet PHP et de son composer.json."
 
+      - name: Simuler un échec pour tester le blocage
+        id: simulated-failure
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_failure }}
+        run: |
+          echo "::error::Échec simulé à la demande pour vérifier que la publication est bloquée."
+          exit 1
+
       - name: Définir l’environnement de l’image
         id: image-env
         shell: bash
@@ -112,6 +125,7 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           PHP_LINT_OUTCOME: ${{ steps.php-lint.outcome }}
+          SIMULATED_FAILURE_OUTCOME: ${{ steps.simulated-failure.outcome }}
           CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           SETUP_PHP_OUTCOME: ${{ steps.setup-php.outcome }}
           COMPOSER_OUTCOME: ${{ steps.composer.outcome }}
@@ -141,6 +155,7 @@ jobs:
             [[ "$CHECKOUT_OUTCOME" == "failure" ]] && failures+=("récupération du code")
             [[ "$SETUP_PHP_OUTCOME" == "failure" ]] && failures+=("configuration de PHP")
             [[ "$PHP_LINT_OUTCOME" == "failure" ]] && failures+=("vérification de la syntaxe PHP")
+            [[ "$SIMULATED_FAILURE_OUTCOME" == "failure" ]] && failures+=("échec simulé à la demande")
             [[ "$COMPOSER_OUTCOME" == "failure" ]] && failures+=("installation des dépendances Composer")
             [[ "$PHPUNIT_OUTCOME" == "failure" ]] && failures+=("tests PHPUnit")
             [[ "$IMAGE_ENV_OUTCOME" == "failure" ]] && failures+=("configuration de l’environnement de l’image")
