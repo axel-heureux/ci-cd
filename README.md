@@ -8,6 +8,12 @@ Il vérifie la syntaxe PHP, installe les dépendances Composer et exécute PHPUn
 lorsqu’un `composer.json` est présent. Les tests nécessitent `phpunit/phpunit`
 dans les dépendances de développement Composer.
 
+Pour vérifier que la pipeline s’arrête en cas d’échec sans casser l’application,
+lancez le workflow manuellement depuis l’onglet Actions et activez
+`simulate_failure`. L’étape de simulation échoue volontairement avant la
+construction et la publication de l’image; la notification Google Chat indique
+l’échec. Laissez cette option désactivée pour une exécution normale.
+
 Après les vérifications, l’image est construite avec le `Dockerfile` à la racine
 et publiée sur GHCR : les push sur `main` utilisent le tag `dev`, tandis que les
 tags Git publient l’image avec le nom du tag et l’environnement `production`.
